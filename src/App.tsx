@@ -1,72 +1,64 @@
-import { useState } from 'react'
-import electron from '/electron.png'
-import react from '/react.svg'
-import vite from '/vite.svg'
-import styles from 'styles/app.module.scss'
+import { Button, Typography } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const App: React.FC = () => {
-  const [count, setCount] = useState(0)
+import { HomeScreen } from "./screens";
+import { RootWrapper, StyledCard } from "./Styled";
+
+const App = () => {
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
+  const [isLibraryLocationAvailable, setIsLibraryLocationAvailable] =
+    useState<boolean>(true);
+
+  const initialLoadRef = useRef<boolean>(false);
+
+  const handleSetLibraryLocation = useCallback(async () => {
+    setIsButtonDisabled(() => true);
+
+    try {
+      await window.userData.setLibraryLocation();
+
+      setIsLibraryLocationAvailable(() => true);
+    } catch (err) {
+      console.log(err);
+    }
+
+    setIsButtonDisabled(() => false);
+  }, []);
+
+  const handleInitialLoad = useCallback(async () => {
+    const libraryLocation = await window.userData.getLibraryLocation();
+
+    if (!libraryLocation) setIsLibraryLocationAvailable(() => false);
+  }, []);
+
+  useEffect(() => {
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      handleInitialLoad();
+    }
+  }, [initialLoadRef]);
 
   return (
-    <div className={styles.app}>
-      <header className={styles.appHeader}>
-        <div className={styles.logos}>
-          <div className={styles.imgBox}>
-            <img
-              src={electron}
-              style={{ height: '24vw' }}
-              className={styles.appLogo}
-              alt="electron"
-            />
-          </div>
-          <div className={styles.imgBox}>
-            <img src={vite} style={{ height: '19vw' }} alt="vite" />
-          </div>
-          <div className={styles.imgBox}>
-            <img
-              src={react}
-              style={{ maxWidth: '100%' }}
-              className={styles.appLogo}
-              alt="logo"
-            />
-          </div>
-        </div>
-        <p>Hello Electron + Vite + React!</p>
-        <p>
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <div>
-          <a
-            className={styles.appLink}
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
+    <RootWrapper>
+      {isLibraryLocationAvailable ? (
+        <HomeScreen />
+      ) : (
+        <StyledCard>
+          <Typography variant="body2">
+            Please set library location...
+          </Typography>
+          <Button
+            color="warning"
+            disabled={isButtonDisabled}
+            onClick={handleSetLibraryLocation}
+            variant="contained"
           >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className={styles.appLink}
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-          <div className={styles.staticPublic}>
-            Place static files into the{' '}
-            <code>/public</code> folder
-            <img style={{ width: 77 }} src="./node.png" />
-          </div>
-        </div>
-      </header>
-    </div>
-  )
-}
+            Set Library Location
+          </Button>
+        </StyledCard>
+      )}
+    </RootWrapper>
+  );
+};
 
-export default App
+export default App;
