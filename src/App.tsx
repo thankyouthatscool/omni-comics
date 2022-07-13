@@ -1,13 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
+import { SetLibraryLocation } from "./components";
 import { HomeScreen } from "./screens";
-import { setLibraryLocation, useAppDispatch, useAppSelector } from "./store";
+import {
+  clearLibraryLocation,
+  setLibraryLocation,
+  useAppDispatch,
+  useAppSelector,
+} from "./store";
 import { RootWrapper } from "./Styled";
 
 const App = () => {
   const dispatch = useAppDispatch();
 
   const { libraryLocation } = useAppSelector(({ userData }) => userData);
+
+  const initialLoadRef = useRef<boolean>(false);
 
   const handleGetLibraryLocation = async () => {
     const storedLibraryLocation = await window.userData.getLibraryLocation();
@@ -16,10 +24,29 @@ const App = () => {
   };
 
   useEffect(() => {
-    handleGetLibraryLocation();
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      handleGetLibraryLocation();
+    }
+  }, [initialLoadRef]);
+
+  useEffect(() => {
+    const clearLibraryLocationSubscription = window.contextMenu.clearLibrary(
+      () => {
+        dispatch(clearLibraryLocation());
+      }
+    );
+
+    return () => {
+      clearLibraryLocationSubscription();
+    };
   }, []);
 
-  return <RootWrapper>{libraryLocation && <HomeScreen />}</RootWrapper>;
+  return (
+    <RootWrapper>
+      {libraryLocation ? <HomeScreen /> : <SetLibraryLocation />}
+    </RootWrapper>
+  );
 };
 
 export default App;

@@ -1,16 +1,15 @@
-import { Card } from "@mui/material";
 import styled from "styled-components";
 
 export const GroupWrapper = styled.div``;
 
-export const HoverContainer = styled.div``;
-
-export const StyledCard = styled(Card)``;
-
 export const HomeScreenWrapper = styled.div`
+  border: 2px solid red;
+
   display: flex;
 
   height: 100%;
+
+  overflow: hidden auto;
 
   padding: 0.5rem;
 

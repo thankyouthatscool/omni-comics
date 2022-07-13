@@ -112,12 +112,14 @@ contextBridge.exposeInMainWorld("comicBooks", {
   parseComicPath: (comicPath: string) => {
     const { name } = path.parse(comicPath);
 
-    const title = /^(?<title>.+)\s(#|Vol|Book)/i.exec(name);
+    const series = /^(?<series>.+)\s(#|Vol|Book)/i.exec(name);
     const issue = /(?<issue>#\d+|Vol\.\s\d+|Book\s\d+)/i.exec(name);
+    const title = /(Vol. \d+\s|Book \d+\s)(?<title>[A-Za-z ]+)/i.exec(name);
 
     return {
       issue: issue?.groups?.issue!,
-      title: title?.groups?.title!,
+      series: series?.groups?.series!,
+      title: title?.groups?.title,
     };
   },
 });
@@ -258,7 +260,11 @@ contextBridge.exposeInMainWorld("zipper", {
   },
 });
 
-ipcRenderer.on("context-menu-command", (e, command) => {
-  console.log(e);
-  console.log(command);
+contextBridge.exposeInMainWorld("contextMenu", {
+  clearLibrary: (callback: () => void) => {
+    ipcRenderer.on("reset-library-location", callback);
+    return () => {
+      ipcRenderer.removeListener("reset-library-location", callback);
+    };
+  },
 });

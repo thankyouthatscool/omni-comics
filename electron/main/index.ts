@@ -121,13 +121,17 @@ ipcMain.handle("getLibraryLocation", () => {
 });
 
 ipcMain.handle("setLibraryLocation", () => {
-  const newLibraryDirectory = dialog.showOpenDialogSync({
-    properties: ["openDirectory"],
-  })[0];
+  try {
+    const newLibraryDirectory = dialog.showOpenDialogSync({
+      properties: ["openDirectory"],
+    })[0];
 
-  userDataStore.set("libraryLocation", newLibraryDirectory);
+    userDataStore.set("libraryLocation", newLibraryDirectory);
 
-  return newLibraryDirectory;
+    return newLibraryDirectory;
+  } catch {
+    console.log("No directory selected!");
+  }
 });
 
 const menu = Menu.buildFromTemplate([
@@ -141,6 +145,20 @@ const menu = Menu.buildFromTemplate([
         label: "Developer Tools",
         role: "toggleDevTools",
       },
+    ],
+  },
+  {
+    label: "Library",
+    submenu: [
+      {
+        click: (_, focusedWindow) => {
+          userDataStore.delete("libraryLocation");
+          focusedWindow.webContents.send("reset-library-location");
+        },
+        label: "Reset Library Location",
+        role: "front",
+      },
+      { label: "Reload library" },
     ],
   },
 ]);
