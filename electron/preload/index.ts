@@ -3,6 +3,9 @@ import unrar from "electron-unrar-js";
 import fs from "fs";
 import path from "path";
 
+import AdmZip from "adm-zip";
+import extract from "extract-zip";
+
 import { getLibraryDirectoryFileList } from "./utils";
 
 function domReady(
@@ -230,4 +233,32 @@ contextBridge.exposeInMainWorld("userData", {
 
     return newLibraryLocation;
   },
+});
+
+contextBridge.exposeInMainWorld("zipper", {
+  unzipper: () => {
+    const zipper = new AdmZip(
+      "/mnt/e/Comic Books/B/Birthright/Birthright Vol. 10.cbz"
+    );
+
+    const archiveContent = zipper.getEntries();
+
+    const archiveFiles = archiveContent.filter((entry) => !entry.isDirectory);
+
+    console.log(archiveFiles[0].entryName);
+
+    zipper.extractEntryTo(
+      archiveFiles[0].entryName,
+      "/mnt/e/Comic Books/B/Birthright",
+      true,
+      true
+    );
+
+    // console.log(archiveFiles);
+  },
+});
+
+ipcRenderer.on("context-menu-command", (e, command) => {
+  console.log(e);
+  console.log(command);
 });

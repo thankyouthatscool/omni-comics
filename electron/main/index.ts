@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, shell, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import store from "electron-store";
 import { release } from "os";
 import { join } from "path";
@@ -129,3 +129,19 @@ ipcMain.handle("setLibraryLocation", () => {
 
   return newLibraryDirectory;
 });
+
+const menu = Menu.buildFromTemplate([
+  {
+    label: "DEV",
+    submenu: [
+      {
+        click: (_, focusedWindow) => {
+          focusedWindow.webContents.toggleDevTools();
+        },
+        label: "Developer Tools",
+        role: "toggleDevTools",
+      },
+    ],
+  },
+]);
+Menu.setApplicationMenu(menu);

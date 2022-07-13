@@ -1,64 +1,25 @@
-import { Button, Typography } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 
 import { HomeScreen } from "./screens";
-import { RootWrapper, StyledCard } from "./Styled";
+import { setLibraryLocation, useAppDispatch, useAppSelector } from "./store";
+import { RootWrapper } from "./Styled";
 
 const App = () => {
-  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
-  const [isLibraryLocationAvailable, setIsLibraryLocationAvailable] =
-    useState<boolean>(true);
+  const dispatch = useAppDispatch();
 
-  const initialLoadRef = useRef<boolean>(false);
+  const { libraryLocation } = useAppSelector(({ userData }) => userData);
 
-  const handleSetLibraryLocation = useCallback(async () => {
-    setIsButtonDisabled(() => true);
+  const handleGetLibraryLocation = async () => {
+    const storedLibraryLocation = await window.userData.getLibraryLocation();
 
-    try {
-      await window.userData.setLibraryLocation();
-
-      setIsLibraryLocationAvailable(() => true);
-    } catch (err) {
-      console.log(err);
-    }
-
-    setIsButtonDisabled(() => false);
-  }, []);
-
-  const handleInitialLoad = useCallback(async () => {
-    const libraryLocation = await window.userData.getLibraryLocation();
-
-    if (!libraryLocation) setIsLibraryLocationAvailable(() => false);
-  }, []);
+    dispatch(setLibraryLocation(storedLibraryLocation));
+  };
 
   useEffect(() => {
-    if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      handleInitialLoad();
-    }
-  }, [initialLoadRef]);
+    handleGetLibraryLocation();
+  }, []);
 
-  return (
-    <RootWrapper>
-      {isLibraryLocationAvailable ? (
-        <HomeScreen />
-      ) : (
-        <StyledCard>
-          <Typography variant="body2">
-            Please set library location...
-          </Typography>
-          <Button
-            color="warning"
-            disabled={isButtonDisabled}
-            onClick={handleSetLibraryLocation}
-            variant="contained"
-          >
-            Set Library Location
-          </Button>
-        </StyledCard>
-      )}
-    </RootWrapper>
-  );
+  return <RootWrapper>{libraryLocation && <HomeScreen />}</RootWrapper>;
 };
 
 export default App;
