@@ -88,7 +88,7 @@ app.on("activate", () => {
 });
 
 // new window example arg: new windows url
-ipcMain.handle("open-win", (event, arg) => {
+ipcMain.handle("open-win", (_, arg) => {
   const childWindow = new BrowserWindow({
     webPreferences: {
       preload,
@@ -103,35 +103,13 @@ ipcMain.handle("open-win", (event, arg) => {
   }
 });
 
-const comicBooksStore = new store();
+const coversStore = new store();
 const userDataStore = new store({
   schema: {
     libraryLocation: {
       type: "string",
     },
   },
-});
-
-ipcMain.handle("clearLibraryLocation", () => {
-  userDataStore.clear();
-});
-
-ipcMain.handle("getLibraryLocation", () => {
-  return userDataStore.get("libraryLocation");
-});
-
-ipcMain.handle("setLibraryLocation", () => {
-  try {
-    const newLibraryDirectory = dialog.showOpenDialogSync({
-      properties: ["openDirectory"],
-    })[0];
-
-    userDataStore.set("libraryLocation", newLibraryDirectory);
-
-    return newLibraryDirectory;
-  } catch {
-    console.log("No directory selected!");
-  }
 });
 
 const menu = Menu.buildFromTemplate([
@@ -158,8 +136,35 @@ const menu = Menu.buildFromTemplate([
         label: "Reset Library Location",
         role: "front",
       },
-      { label: "Reload library" },
+      { label: "Reload Library" },
     ],
   },
 ]);
+
 Menu.setApplicationMenu(menu);
+
+ipcMain.handle("clearLibraryLocation", () => {
+  userDataStore.clear();
+});
+
+ipcMain.handle("getLibraryLocation", () => {
+  return userDataStore.get("libraryLocation");
+});
+
+ipcMain.handle("getUserDataLocation", () => {
+  return app.getPath("userData");
+});
+
+ipcMain.handle("setLibraryLocation", () => {
+  try {
+    const newLibraryDirectory = dialog.showOpenDialogSync({
+      properties: ["openDirectory"],
+    })[0];
+
+    userDataStore.set("libraryLocation", newLibraryDirectory);
+
+    return newLibraryDirectory;
+  } catch {
+    console.log("No directory selected!");
+  }
+});

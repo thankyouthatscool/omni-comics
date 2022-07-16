@@ -6,12 +6,16 @@ import { ViewerWrapper } from "./Styled";
 export const Viewer = () => {
   const dispatch = useAppDispatch();
 
-  const { libraryLocation } = useAppSelector(({ userData }) => userData);
+  const { libraryLocation, userDataLocation } = useAppSelector(
+    ({ userData }) => userData
+  );
 
   return (
     <ViewerWrapper>
       <h1>Viewer</h1>
-      <pre>{JSON.stringify({ libraryLocation }, null, 2)}</pre>
+      <pre>
+        {JSON.stringify({ libraryLocation, userDataLocation }, null, 2)}
+      </pre>
       <Button
         color="error"
         onClick={() => {

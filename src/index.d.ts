@@ -1,5 +1,9 @@
 interface Window {
   readonly comicBooks: {
+    getCover: (
+      comicBookPath: string,
+      userDataLocation: string
+    ) => Promise<{ base64ImageRepresentation: any; coverPageInfo: any }>;
     getLibraryContent: (libraryLocation: string) => Promise<string[]>;
     parseComicPath: (comicPath: string) => {
       issue: string;
@@ -15,6 +19,7 @@ interface Window {
   readonly userData: {
     clearLibraryLocation: () => void;
     getLibraryLocation: () => Promise<string>;
+    getUserDataLocation: () => Promise<string>;
     setLibraryLocation: () => Promise<string>;
   };
   readonly zipper: { unzipper: () => void };

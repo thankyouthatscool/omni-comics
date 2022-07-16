@@ -1,12 +1,25 @@
-import { contextBridge, ipcRenderer } from "electron";
+import {
+  app,
+  contextBridge,
+  ipcMain,
+  ipcRenderer,
+  nativeImage,
+} from "electron";
 import unrar from "electron-unrar-js";
 import fs from "fs";
 import path from "path";
 
+import process from "process";
+
 import AdmZip from "adm-zip";
 import extract from "extract-zip";
 
-import { getLibraryDirectoryFileList } from "./utils";
+import {
+  getLibraryDirectoryFileList,
+  getRarCover,
+  getRarFileContents,
+  extractZipCover,
+} from "./utils";
 
 function domReady(
   condition: DocumentReadyState[] = ["complete", "interactive"]
@@ -104,6 +117,136 @@ window.onmessage = (ev) => {
 setTimeout(removeLoading, 4999);
 
 contextBridge.exposeInMainWorld("comicBooks", {
+  getCover: async (comicBookPath: string, userDataLocation: string) => {
+    if (!fs.existsSync(path.join(userDataLocation, "covers"))) {
+      fs.mkdirSync(path.join(userDataLocation, "covers"));
+    }
+
+    const { base, ext, name } = path.parse(comicBookPath);
+    const coverDirectory = path.join(
+      userDataLocation,
+      `./covers/[COVER]-${name.trim()}`
+    );
+    const coverDirectoryExists = fs.existsSync(coverDirectory);
+
+    if (coverDirectoryExists) {
+      try {
+        const directoryContents = await getLibraryDirectoryFileList(
+          coverDirectory
+        );
+        const coverPageInfo = path.parse(directoryContents[0]);
+        const coverLoaderWorker = new Worker(
+          URL.createObjectURL(
+            new Blob(
+              [
+                `
+                  const { nativeImage } = require("electron");
+
+                  onmessage = (e) => {
+                    const res = nativeImage.createFromPath(e.data).toJPEG(0).toString("base64");
+                    postMessage(res);
+                  };
+            `,
+              ],
+              {
+                type: "text/javascript",
+              }
+            )
+          )
+        );
+
+        coverLoaderWorker.postMessage(
+          path.join(coverPageInfo.dir, coverPageInfo.base)
+        );
+
+        return new Promise((resolve) => {
+          coverLoaderWorker.onmessage = (e) => {
+            resolve({ base64ImageRepresentation: e.data, coverPageInfo });
+          };
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    } else {
+      try {
+        fs.mkdirSync(coverDirectory);
+        if (ext === ".cbr") {
+          const coverPageInfo = getRarFileContents(comicBookPath)[0];
+          getRarCover(comicBookPath, coverPageInfo, userDataLocation);
+
+          const coverWorker = new Worker(
+            URL.createObjectURL(
+              new Blob(
+                [
+                  `
+                  const { nativeImage } = require("electron");
+
+                  onmessage = (e) => {
+                    const res = nativeImage.createFromPath(e.data).toJPEG(0).toString("base64");
+                    postMessage(res);
+                  };
+            `,
+                ],
+                {
+                  type: "text/javascript",
+                }
+              )
+            )
+          );
+
+          coverWorker.postMessage(
+            path.join(coverDirectory, `${coverPageInfo.base}`)
+          );
+
+          return new Promise((resolve) => {
+            coverWorker.onmessage = (e) => {
+              resolve({ base64ImageRepresentation: e.data, coverPageInfo });
+            };
+          });
+        }
+
+        if (ext === ".cbz") {
+          console.log("in the zipper");
+
+          const coverPageInfo = path.parse(
+            extractZipCover(comicBookPath, coverDirectory)
+          );
+
+          const coverWorker = new Worker(
+            URL.createObjectURL(
+              new Blob(
+                [
+                  `
+                  const { nativeImage } = require("electron");
+
+                  onmessage = (e) => {
+                    const res = nativeImage.createFromPath(e.data).toJPEG(0).toString("base64");
+                    postMessage(res);
+                  };
+            `,
+                ],
+                {
+                  type: "text/javascript",
+                }
+              )
+            )
+          );
+
+          coverWorker.postMessage(
+            path.join(coverDirectory, `${coverPageInfo.base}`)
+          );
+
+          return new Promise((resolve) => {
+            coverWorker.onmessage = (e) => {
+              resolve({ base64ImageRepresentation: e.data, coverPageInfo });
+            };
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  },
   getLibraryContent: async (libraryLocation: string) => {
     const libraryContent = await getLibraryDirectoryFileList(libraryLocation);
 
@@ -124,18 +267,11 @@ contextBridge.exposeInMainWorld("comicBooks", {
   },
 });
 
-// TODO: Extract to a central location.
-// [ ] Everything will need to be extracted to what ever the location of userData is.
-
-// TODO: Also need to handle zip files - should be much easier.
-
 contextBridge.exposeInMainWorld("rar", {
   getBookPage: (comicBookPath: string, page: path.ParsedPath): string => {
     const { dir, ext, name } = path.parse(comicBookPath);
 
     const pagePath = path.join(page.dir, `${page.name}${page.ext}`);
-
-    console.log(pagePath);
 
     const sourceFile = path.join(dir, `${name}${ext}`);
     const targetDirectory = path.join(dir, name.trim());
@@ -227,6 +363,9 @@ contextBridge.exposeInMainWorld("userData", {
     )) as string;
 
     return libraryLocation;
+  },
+  getUserDataLocation: (): Promise<string> => {
+    return ipcRenderer.invoke("getUserDataLocation") as Promise<string>;
   },
   setLibraryLocation: async () => {
     const newLibraryLocation = (await ipcRenderer.invoke(

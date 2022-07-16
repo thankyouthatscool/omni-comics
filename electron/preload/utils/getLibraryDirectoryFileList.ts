@@ -10,7 +10,12 @@ export const getLibraryDirectoryFileList = async (libraryDir: string) => {
       if (statSync(absDir).isDirectory()) {
         return readDirContent(absDir);
       } else {
-        if (parse(absDir).ext === ".cbr" || parse(absDir).ext === ".cbz") {
+        if (
+          parse(absDir).ext === ".cbr" ||
+          parse(absDir).ext === ".cbz" ||
+          parse(absDir).ext === ".jpg" ||
+          parse(absDir).ext === ".png"
+        ) {
           return FILES.push(absDir);
         }
       }

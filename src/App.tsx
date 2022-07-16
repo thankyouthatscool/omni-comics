@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { SetLibraryLocation } from "./components";
 import { HomeScreen } from "./screens";
 import {
   clearLibraryLocation,
   setLibraryLocation,
+  setUserDataLocation,
   useAppDispatch,
   useAppSelector,
 } from "./store";
@@ -23,10 +24,17 @@ const App = () => {
     dispatch(setLibraryLocation(storedLibraryLocation));
   };
 
+  const handleSetUserDataLocation = useCallback(async () => {
+    const userDataLocation = await window.userData.getUserDataLocation();
+
+    dispatch(setUserDataLocation(userDataLocation));
+  }, []);
+
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
       handleGetLibraryLocation();
+      handleSetUserDataLocation();
     }
   }, [initialLoadRef]);
 

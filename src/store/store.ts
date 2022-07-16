@@ -1,7 +1,7 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 
 import ui from "./uiSlice";
-import userData from "./useDataSlice";
+import userData from "./userDataSlice";
 
 export const store = configureStore({
   reducer: { ui, userData },

@@ -1,15 +1,31 @@
-import { Divider, Typography } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Button, Divider, Typography } from "@mui/material";
+import { nativeImage } from "electron";
+import { useEffect, useMemo, useRef } from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
 
-import { Viewer } from "../../components";
-import { useAppSelector } from "../../store";
-import { GroupWrapper, LibraryWrapper, HomeScreenWrapper } from "./Styled";
+import { BookCollection, Viewer } from "../../components";
+import {
+  setLibraryContent,
+  setSelectedSeries,
+  useAppDispatch,
+  useAppSelector,
+} from "../../store";
+import {
+  BookCollectionWrapper,
+  GroupWrapper,
+  LibraryWrapper,
+  HomeScreenWrapper,
+} from "./Styled";
 
 export const HomeScreen = () => {
-  const [libraryContent, setLibraryContent] = useState<string[]>([]);
-
   const { isViewerOpen } = useAppSelector(({ ui }) => ui);
-  const { libraryLocation } = useAppSelector(({ userData }) => userData);
+  const { libraryContent, libraryLocation } = useAppSelector(
+    ({ userData }) => userData
+  );
+
+  const navigate = useNavigate();
+
+  const dispatch = useAppDispatch();
 
   const initialLoadRef = useRef<boolean>(false);
 
@@ -18,7 +34,7 @@ export const HomeScreen = () => {
       libraryLocation!
     );
 
-    setLibraryContent(() => libraryContent);
+    dispatch(setLibraryContent(libraryContent.slice(67, 69)));
   };
 
   useEffect(() => {
@@ -28,7 +44,7 @@ export const HomeScreen = () => {
     }
   }, [initialLoadRef]);
 
-  const zoop = useMemo(() => {
+  const alphabeticTitleMap = useMemo(() => {
     return Array.from(
       new Set(
         libraryContent
@@ -64,29 +80,46 @@ export const HomeScreen = () => {
 
   return (
     <HomeScreenWrapper>
-      <LibraryWrapper>
-        {/* TOD O: Not zoop */}
-        {Object.keys(zoop).map((letter) => (
-          <GroupWrapper key={letter}>
-            <Typography variant="h4">{letter}</Typography>
-            <div
-              style={{
-                border: "2px solid blue",
+      <Routes>
+        <Route
+          element={
+            <LibraryWrapper>
+              {Object.keys(alphabeticTitleMap).map((letter) => (
+                <GroupWrapper key={letter}>
+                  <Typography variant="h4">{letter}</Typography>
+                  <div
+                    style={{
+                      display: "flex",
 
-                display: "flex",
+                      flexWrap: "wrap",
 
-                margin: "1rem 0",
-              }}
-            >
-              {zoop[letter].map((book) => (
-                <div>{book}</div>
+                      margin: "1rem 0",
+                    }}
+                  >
+                    {alphabeticTitleMap[letter].map((seriesTitle) => (
+                      <BookCollectionWrapper height={420} key={seriesTitle}>
+                        <BookCollection bookSeries={seriesTitle} />
+                      </BookCollectionWrapper>
+                    ))}
+                  </div>
+                  <Divider />
+                </GroupWrapper>
               ))}
+            </LibraryWrapper>
+          }
+          path="/"
+        />
+        <Route
+          element={
+            <div>
+              <div>Hello</div>
+              <Button onClick={() => navigate("/")}>Back</Button>
+              {isViewerOpen && <Viewer />}
             </div>
-            <Divider />
-          </GroupWrapper>
-        ))}
-      </LibraryWrapper>
-      {isViewerOpen && <Viewer />}
+          }
+          path=":bookSeries"
+        />
+      </Routes>
     </HomeScreenWrapper>
   );
 };
