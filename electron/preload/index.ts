@@ -8,6 +8,7 @@ import {
 import fs from "fs";
 import path from "path";
 
+import { getLibraryContent, parseComicPath } from "./utils/comicBooks";
 import {
   clearLibraryLocation,
   getLibraryLocation,
@@ -109,6 +110,12 @@ window.onmessage = (ev) => {
 };
 
 setTimeout(removeLoading, 4999);
+
+// Comic Books
+contextBridge.exposeInMainWorld("comicBooks", {
+  getLibraryContent,
+  parseComicPath,
+});
 
 // User Data
 contextBridge.exposeInMainWorld("userData", {
