@@ -8,6 +8,13 @@ import {
 import fs from "fs";
 import path from "path";
 
+import {
+  clearLibraryLocation,
+  getLibraryLocation,
+  getUserDataLocation,
+  setLibraryLocation,
+} from "./utils/userData";
+
 function domReady(
   condition: DocumentReadyState[] = ["complete", "interactive"]
 ) {
@@ -102,3 +109,11 @@ window.onmessage = (ev) => {
 };
 
 setTimeout(removeLoading, 4999);
+
+// User Data
+contextBridge.exposeInMainWorld("userData", {
+  clearLibraryLocation,
+  getLibraryLocation,
+  getUserDataLocation,
+  setLibraryLocation,
+});

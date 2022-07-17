@@ -3,6 +3,13 @@ import store from "electron-store";
 import { release } from "os";
 import { join } from "path";
 
+import {
+  clearLibraryLocation,
+  getLibraryLocation,
+  getUserDataLocation,
+  setLibraryLocation,
+} from "./utils/userData";
+
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith("6.1")) app.disableHardwareAcceleration();
 
@@ -102,3 +109,15 @@ ipcMain.handle("open-win", (_, arg) => {
     // childWindow.webContents.openDevTools({ mode: "undocked", activate: true })
   }
 });
+
+export const userDataStore = new store();
+
+// User data location
+ipcMain.handle("getUserDataLocation", getUserDataLocation);
+
+// Library location
+ipcMain.handle("getLibraryLocation", getLibraryLocation);
+
+ipcMain.handle("setLibraryLocation", setLibraryLocation);
+
+ipcMain.handle("clearLibraryLocation", clearLibraryLocation);
