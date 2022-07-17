@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
 import { useEffect, useRef } from "react";
 
+import { LibraryScreen } from "./screens";
 import {
   clearLibraryLocation,
   setLibraryLocation,
@@ -8,12 +9,10 @@ import {
   useAppDispatch,
   useAppSelector,
 } from "./store";
-import { RootWrapper } from "./Styled";
+import { RootWrapper, SetLocationWrapper } from "./Styled";
 
 const App = () => {
-  const { libraryLocation, userDataLocation } = useAppSelector(
-    ({ userData }) => userData
-  );
+  const { libraryLocation } = useAppSelector(({ userData }) => userData);
 
   const dispatch = useAppDispatch();
 
@@ -59,26 +58,17 @@ const App = () => {
 
   return (
     <RootWrapper>
-      <pre>
-        {JSON.stringify({ libraryLocation, userDataLocation }, null, 2)}
-      </pre>
-      {libraryLocation && (
-        <Button
-          color="error"
-          onClick={handleClearLibraryLocation}
-          variant="contained"
-        >
-          Clear Library Location
-        </Button>
-      )}
+      {libraryLocation && <LibraryScreen />}
       {!libraryLocation && (
-        <Button
-          color="warning"
-          onClick={handleSetLibraryLocation}
-          variant="contained"
-        >
-          Set Library Location
-        </Button>
+        <SetLocationWrapper>
+          <Button
+            color="warning"
+            onClick={handleSetLibraryLocation}
+            variant="contained"
+          >
+            Set Library Location
+          </Button>
+        </SetLocationWrapper>
       )}
     </RootWrapper>
   );
